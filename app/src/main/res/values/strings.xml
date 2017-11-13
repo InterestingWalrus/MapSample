@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Map Sample</string>
+    <string name="title_activity_demo">GSDemoActivity</string>
+    <string name="google_app_id">com.dji.MapDemo.GoogleMap</string>
+</resources>
