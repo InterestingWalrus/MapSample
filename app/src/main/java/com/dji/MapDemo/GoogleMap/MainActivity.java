@@ -64,14 +64,76 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 
     private  GoogleMap gMap;
     private  Button locate, add, clear;
-    private Button config, upload, start; stop;
+    private Button config, upload, start, stop;
 
     private boolean isAdd = false;
 
     private double droneLocationLat = 181;
     private double droneLocationLng = 181;
 
-    private final<Integer, Marker> mMarkers = new ConcurrentHashMap<Integer, Marker>
+    private final Map<Integer, Marker> mMarkers = new ConcurrentHashMap<Integer, Marker>();
+    private Marker droneMarker = null;
+    private float altitude = 100.0f;
+    private float mSpeed = 10.0f;
+
+    private List<Waypoint> waypointList = new ArrayList<>();
+
+    public  static WaypointMission.Builder waypointMissionBuilder;
+    private FlightController mFlightController;
+    private WaypointMissionOperator instance;
+    private WaypointMissionFinishedAction mFinishedAction = WaypointMissionFinishedAction.NO_ACTION;
+    private WaypointMissionHeadingMode mHeadingMode = WaypointMissionHeadingMode.AUTO;
+
+    @Override
+    protected  void onResume()
+    {
+        super.onResume();
+        initFlightController();
+    }
+
+    @Override
+    protected  void onPause()
+    {
+        super.onPause();
+    }
+
+    @Override
+    protected void onDestroy()
+    {
+        unregisterReceiver(mReceiver);
+        removeListener();
+        super.onDestroy();
+    }
+
+    // Return button response Function
+    public  void onReturn(View view)
+    {
+        Log.d(TAG, "onReturn");
+        this.finish();
+    }
+
+    private void setResultToToast(final String string)
+
+    private void initUI()
+    {
+        locate = (Button) findViewById(R.id.locate);
+        add = (Button) findViewById(R.id.add);
+        clear = (Button) findViewById(R.id.clear);
+        config = (Button) findViewById(R.id.config);
+        upload = (Button) findViewById(R.id.upload);
+        start = (Button) findViewById(R.id.start);
+        stop = (Button) findViewById(R.id.stop);
+
+
+        locate.setOnClickListener(this);
+        add.setOnClickListener(this);
+        clear.setOnClickListener(this);
+        config.setOnClickListener(this);
+        upload.setOnClickListener(this);
+        start.setOnClickListener(this);
+        stop.setOnClickListener(this);
+
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
