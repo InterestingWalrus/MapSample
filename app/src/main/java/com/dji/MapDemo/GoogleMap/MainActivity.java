@@ -10,6 +10,7 @@ package com.dji.MapDemo.GoogleMap;
         import android.content.Intent;
         import android.content.IntentFilter;
         import android.content.pm.PackageManager;
+        import android.graphics.Color;
         import android.location.Location;
         import android.os.Build;
         import android.support.annotation.Nullable;
@@ -35,9 +36,12 @@ package com.dji.MapDemo.GoogleMap;
         import com.google.android.gms.maps.model.LatLng;
         import com.google.android.gms.maps.model.Marker;
         import com.google.android.gms.maps.model.MarkerOptions;
+        import com.google.android.gms.maps.model.Polygon;
+        import com.google.android.gms.maps.model.PolygonOptions;
         import com.google.android.gms.tasks.OnSuccessListener;
 
         import java.util.ArrayList;
+        import java.util.LinkedList;
         import java.util.List;
         import java.util.Map;
         import java.util.concurrent.ConcurrentHashMap;
@@ -57,6 +61,8 @@ package com.dji.MapDemo.GoogleMap;
         import dji.common.mission.waypoint.WaypointMissionUploadEvent;
         import dji.common.useraccount.UserAccountState;
         import dji.common.util.CommonCallbacks;
+        import dji.internal.util.Util;
+        import dji.midware.data.model.P3.DataFlycDownloadWayPointMissionMsg;
         import dji.sdk.base.BaseProduct;
         import dji.sdk.flightcontroller.FlightController;
         import dji.common.error.DJIError;
@@ -65,15 +71,18 @@ package com.dji.MapDemo.GoogleMap;
         import dji.sdk.products.Aircraft;
         import dji.sdk.sdkmanager.DJISDKManager;
         import dji.sdk.useraccount.UserAccountManager;
+        import dji.thirdparty.afinal.utils.Utils;
 
 public class MainActivity extends FragmentActivity implements View.OnClickListener, GoogleMap.OnMapClickListener, OnMapReadyCallback {
 
     protected static final String TAG = "GSDemoActivity";
+    private static final double ONE_METER_OFFSET = 0.00000899322;
 
     private GoogleMap gMap;
 
     private Button locate, add, clear;
     private Button config, upload, start, stop;
+    private Button polygon;
 
     private boolean isAdd = false;
 
@@ -83,6 +92,12 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 
     private float altitude = 100.0f;
     private float mSpeed = 10.0f;
+
+    Polygon shape;
+    private int POLYGON_POINTS = 4;
+
+    // Home point for the Drone
+    private LatLng homeBase;
 
     private List<Waypoint> waypointList = new ArrayList<>();
 
@@ -137,6 +152,7 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         upload = (Button) findViewById(R.id.upload);
         start = (Button) findViewById(R.id.start);
         stop = (Button) findViewById(R.id.stop);
+        polygon = (Button) findViewById(R.id.polygon);
 
         locate.setOnClickListener(this);
         add.setOnClickListener(this);
@@ -145,7 +161,20 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         upload.setOnClickListener(this);
         start.setOnClickListener(this);
         stop.setOnClickListener(this);
+        polygon.setOnClickListener(this);
 
+    }
+
+    // Converts degrees to radians and calculates a 1 metre offset for the latitude.
+    /* This is based on the following logic
+       Earth Radius = 6371km
+       Perimeter = 2 * pi * 6371km
+       1 degree Latitude = Perimeter / 360
+       Therefore 1 metre offset = 360 / Perimeter
+     */
+    public static  double calcLongitudeOffset(double latitude)
+    {
+        return ONE_METER_OFFSET / Math.cos(latitude * Math.PI/ 180.0f);
     }
 
     @Override
@@ -328,6 +357,8 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
         Marker marker = gMap.addMarker(markerOptions);
         mMarkers.put(mMarkers.size(), marker);
+
+
     }
 
     @Override
@@ -354,12 +385,19 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 
                 });
                 waypointList.clear();
+                removePolyElements();
                 waypointMissionBuilder.waypointList(waypointList);
                 updateDroneLocation();
                 break;
             }
             case R.id.config:{
                 showSettingDialog();
+                break;
+            }
+
+            case R.id.polygon:
+            {
+                coordinateWaypointMission();
                 break;
             }
             case R.id.upload:{
@@ -495,6 +533,43 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         return true;
     }
 
+    private void coordinateWaypointMission()
+    {
+        List<Waypoint> waypoints = new LinkedList<>();
+         // Use to add waypoint markers to the Map...
+        LatLng northPoint = new LatLng(homeBase.latitude + 10 * ONE_METER_OFFSET, homeBase.longitude);
+        LatLng southPoint = new LatLng(homeBase.latitude -10 * ONE_METER_OFFSET, homeBase.longitude);
+        LatLng westPoint = new LatLng(homeBase.latitude, homeBase.longitude - 10 * (calcLongitudeOffset(homeBase.latitude)));
+        LatLng eastPoint  =   new LatLng(homeBase.latitude, homeBase.longitude + 10 * (calcLongitudeOffset(homeBase.latitude)));
+
+        // Calculate Waypoint Markers
+        Waypoint northWaypoint = new Waypoint(homeBase.latitude + 10 * ONE_METER_OFFSET, homeBase.longitude, 10f  );
+        Waypoint southWaypoint = new Waypoint(homeBase.latitude -10 * ONE_METER_OFFSET, homeBase.longitude, 10f);
+        Waypoint eastWaypoint =  new Waypoint(homeBase.latitude, homeBase.longitude + 10 * (calcLongitudeOffset(homeBase.latitude)), 10f );
+        Waypoint westWaypoint = new Waypoint(homeBase.latitude, homeBase.longitude - 10 * (calcLongitudeOffset(homeBase.latitude)), 10f );
+
+        // Optimise later with for/foreach loop
+        markWaypoint(northPoint);
+        markWaypoint(eastPoint);
+        markWaypoint(southPoint);
+        markWaypoint(westPoint);
+
+        waypoints.add(northWaypoint);
+        waypoints.add(southWaypoint);
+        waypoints.add(westWaypoint);
+        waypoints.add(eastWaypoint);
+
+        waypointMissionBuilder.waypointList(waypoints).waypointCount(waypoints.size());
+
+        // Add Actions at each waypoint later..
+
+
+
+
+
+
+    }
+
     private void configWayPointMission()
     {
 
@@ -530,6 +605,9 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
             waypointMissionBuilder.getWaypointList().get(waypointMissionBuilder.getWaypointList().size() - 1).altitude = 10;
             waypointMissionBuilder.getWaypointList().get(waypointMissionBuilder.getWaypointList().size() - 1).addAction(new WaypointAction(WaypointActionType.GIMBAL_PITCH, -60));
 
+           // Return number of Polygon Points;
+            POLYGON_POINTS = waypointMissionBuilder.getWaypointList().size();
+
            // String Altitude_Value =  String.valueOf(waypointMissionBuilder.getWaypointList().get(waypointMissionBuilder.getWaypointList().size() - 1).altitude);
 
             setResultToToast("Altitudes set succesfully" );
@@ -549,7 +627,9 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         getWaypointMissionOperator().uploadMission(new CommonCallbacks.CompletionCallback() {
             @Override
             public void onResult(DJIError error) {
-                if (error == null) {
+                if (error == null)
+                {
+                    drawPolygon();
                     setResultToToast("Mission upload successfully!");
                 } else {
                     setResultToToast("Mission upload failed, error: " + error.getDescription() + " retrying...");
@@ -559,6 +639,37 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         });
 
     }
+
+// Draw Polygon of Marker Distance
+    private void drawPolygon()
+    {
+        PolygonOptions polygonOptions = new PolygonOptions();
+        polygonOptions.fillColor(0x330000FF);
+        polygonOptions.strokeWidth(3);
+        polygonOptions.strokeColor(Color.BLUE);
+
+        for (int i = 0; i < POLYGON_POINTS; i++)
+        {
+            polygonOptions.add(mMarkers.get(i).getPosition());
+        }
+
+         shape = gMap.addPolygon(polygonOptions);
+
+    }
+
+    private void removePolyElements()
+    {
+        for (Marker marker : mMarkers)
+        {
+            marker.remove();
+        }
+
+        mMarkers.clear();
+        shape.remove();
+        shape = null;
+    }
+
+
 
     private void startWaypointMission()
     {
@@ -599,31 +710,31 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 
         }
 
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-//            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-//                    != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-//            }
-//        }
-//
-//        mFusedLocationClient.getLastLocation()
-//                .addOnSuccessListener(this, new OnSuccessListener<Location>()
-//                {
-//                    @Override
-//                    public void onSuccess(Location location) {
-//                        // Got last known location. In some rare situations this can be null.
-//                        if (location != null) {
-//                            LatLng ll = new LatLng(location.getLatitude(), location.getLongitude());
-//                            CameraUpdate update = CameraUpdateFactory.newLatLngZoom(ll, 15);
-//                            gMap.animateCamera(update);
-//                            markWaypoint(ll);
-//                        } else if (location == null) {
-//                            Toast.makeText(getApplicationContext(), "Can't get current location", Toast.LENGTH_LONG).show();
-//                        }
-//                    }
-//                });
-        LatLng shenzhen = new LatLng(22.5362, 113.9454);
-        gMap.addMarker(new MarkerOptions().position(shenzhen).title("Marker in Shenzhen"));
-        gMap.moveCamera(CameraUpdateFactory.newLatLng(shenzhen));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                    != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            }
+        }
+
+        mFusedLocationClient.getLastLocation()
+                .addOnSuccessListener(this, new OnSuccessListener<Location>()
+                {
+                    @Override
+                    public void onSuccess(Location location) {
+                        // Got last known location. In some rare situations this can be null.
+                        if (location != null) {
+                            homeBase = new LatLng(location.getLatitude(), location.getLongitude());
+                            CameraUpdate update = CameraUpdateFactory.newLatLngZoom(homeBase, 19);
+                            gMap.animateCamera(update);
+                            markWaypoint(homeBase);
+                        } else if (location == null) {
+                            Toast.makeText(getApplicationContext(), "Can't get current location", Toast.LENGTH_LONG).show();
+                        }
+                    }
+                });
+//        LatLng shenzhen = new LatLng(22.5362, 113.9454);
+//        gMap.addMarker(new MarkerOptions().position(shenzhen).title("Marker in Shenzhen"));
+//        gMap.moveCamera(CameraUpdateFactory.newLatLng(shenzhen));
     }
 
 

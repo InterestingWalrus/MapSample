@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="#FFFFFF"
-    tools:context="com.dji.GSDemo.GoogleMap.MainActivity">
+    tools:context=".MainActivity">
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -70,6 +70,32 @@
             android:layout_height="wrap_content"
             android:text="Stop"
             android:layout_weight="1"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/polygon"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Polygon"
+            android:layout_weight="0.9"/>
+        <Button
+            android:id="@+id/radius"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Radius"
+            android:layout_weight="1.2"/>
+        <Button
+            android:id="@+id/rectangular"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Rectangular"
+            android:layout_weight="1"/>
+
     </LinearLayout>
     <fragment
         android:id="@+id/map"
