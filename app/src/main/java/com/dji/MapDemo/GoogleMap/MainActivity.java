@@ -19,6 +19,7 @@ package com.dji.MapDemo.GoogleMap;
         import android.os.Bundle;
         import android.util.Log;
         import android.view.View;
+        import android.view.ViewDebug;
         import android.widget.Button;
         import android.widget.LinearLayout;
         import android.widget.RadioGroup;
@@ -33,6 +34,8 @@ package com.dji.MapDemo.GoogleMap;
         import com.google.android.gms.maps.OnMapReadyCallback;
         import com.google.android.gms.maps.SupportMapFragment;
         import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+        import com.google.android.gms.maps.model.Circle;
+        import com.google.android.gms.maps.model.CircleOptions;
         import com.google.android.gms.maps.model.LatLng;
         import com.google.android.gms.maps.model.Marker;
         import com.google.android.gms.maps.model.MarkerOptions;
@@ -87,14 +90,17 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
     private boolean isAdd = false;
 
     private double droneLocationLat = 181, droneLocationLng = 181;
-    private final Map<Integer, Marker> mMarkers = new ConcurrentHashMap<Integer, Marker>();
+    //private final Map<Integer, Marker> mMarkers = new ConcurrentHashMap<Integer, Marker>();
+    ArrayList<Marker> markers = new ArrayList<Marker>();
     private Marker droneMarker = null;
 
     private float altitude = 100.0f;
     private float mSpeed = 10.0f;
 
     Polygon shape;
-    private int POLYGON_POINTS = 4;
+    private int POLYGON_POINTS;
+
+    private Circle missionCircle;
 
     // Home point for the Drone
     private LatLng homeBase;
@@ -356,7 +362,15 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         markerOptions.position(point);
         markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
         Marker marker = gMap.addMarker(markerOptions);
-        mMarkers.put(mMarkers.size(), marker);
+       // mMarkers.put(mMarkers.size(), marker);
+        markers.add(marker);
+
+        if (markers.size() == POLYGON_POINTS)
+        {
+            drawPolygon();
+        }
+
+
 
 
     }
@@ -387,6 +401,7 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
                 waypointList.clear();
                 removePolyElements();
                 waypointMissionBuilder.waypointList(waypointList);
+                POLYGON_POINTS = 0;
                 updateDroneLocation();
                 break;
             }
@@ -397,6 +412,8 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 
             case R.id.polygon:
             {
+                updateDroneLocation();
+                cameraUpdate();
                 coordinateWaypointMission();
                 break;
             }
@@ -535,43 +552,79 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 
     private void coordinateWaypointMission()
     {
-        List<Waypoint> waypoints = new LinkedList<>();
-         // Use to add waypoint markers to the Map...
-        LatLng northPoint = new LatLng(homeBase.latitude + 10 * ONE_METER_OFFSET, homeBase.longitude);
-        LatLng southPoint = new LatLng(homeBase.latitude -10 * ONE_METER_OFFSET, homeBase.longitude);
-        LatLng westPoint = new LatLng(homeBase.latitude, homeBase.longitude - 10 * (calcLongitudeOffset(homeBase.latitude)));
-        LatLng eastPoint  =   new LatLng(homeBase.latitude, homeBase.longitude + 10 * (calcLongitudeOffset(homeBase.latitude)));
 
-        // Calculate Waypoint Markers
-        Waypoint northWaypoint = new Waypoint(homeBase.latitude + 10 * ONE_METER_OFFSET, homeBase.longitude, 10f  );
-        Waypoint southWaypoint = new Waypoint(homeBase.latitude -10 * ONE_METER_OFFSET, homeBase.longitude, 10f);
-        Waypoint eastWaypoint =  new Waypoint(homeBase.latitude, homeBase.longitude + 10 * (calcLongitudeOffset(homeBase.latitude)), 10f );
-        Waypoint westWaypoint = new Waypoint(homeBase.latitude, homeBase.longitude - 10 * (calcLongitudeOffset(homeBase.latitude)), 10f );
+        if (waypointMissionBuilder == null)
+        {
 
-        // Optimise later with for/foreach loop
-        markWaypoint(northPoint);
-        markWaypoint(eastPoint);
-        markWaypoint(southPoint);
-        markWaypoint(westPoint);
+            waypointMissionBuilder = new WaypointMission.Builder().finishedAction(mFinishedAction)
+                    .headingMode(mHeadingMode)
+                    .autoFlightSpeed(mSpeed)
+                    .maxFlightSpeed(mSpeed)
+                    .flightPathMode(WaypointMissionFlightPathMode.NORMAL);
 
-        waypoints.add(northWaypoint);
-        waypoints.add(southWaypoint);
-        waypoints.add(westWaypoint);
-        waypoints.add(eastWaypoint);
 
-        waypointMissionBuilder.waypointList(waypoints).waypointCount(waypoints.size());
+            // set Polygon points to 5
+           // POLYGON_POINTS = 5;
+            List<Waypoint> waypoints = new LinkedList<>();
+            // Use to add waypoint markers to the Map...
+            LatLng northPoint = new LatLng(homeBase.latitude + 10 * ONE_METER_OFFSET, homeBase.longitude);
+            LatLng southPoint = new LatLng(homeBase.latitude -10 * ONE_METER_OFFSET, homeBase.longitude);
+            LatLng westPoint = new LatLng(homeBase.latitude, homeBase.longitude - 10 * (calcLongitudeOffset(homeBase.latitude)));
+            LatLng eastPoint  =   new LatLng(homeBase.latitude, homeBase.longitude + 10 * (calcLongitudeOffset(homeBase.latitude)));
+
+            // Calculate Waypoint Markers
+            Waypoint northWaypoint = new Waypoint(homeBase.latitude + 10 * ONE_METER_OFFSET, homeBase.longitude, 10f  );
+            Waypoint southWaypoint = new Waypoint(homeBase.latitude -10 * ONE_METER_OFFSET, homeBase.longitude, 10f);
+            Waypoint eastWaypoint =  new Waypoint(homeBase.latitude, homeBase.longitude + 10 * (calcLongitudeOffset(homeBase.latitude)), 10f );
+            Waypoint westWaypoint = new Waypoint(homeBase.latitude, homeBase.longitude - 10 * (calcLongitudeOffset(homeBase.latitude)), 10f );
+
+            // Optimise later with for/foreach loop
+            markWaypoint(northPoint);
+            markWaypoint(eastPoint);
+            markWaypoint(southPoint);
+            markWaypoint(westPoint);
+
+            waypoints.add(northWaypoint);
+            waypoints.add(southWaypoint);
+            waypoints.add(westWaypoint);
+            waypoints.add(eastWaypoint);
+
+            waypointMissionBuilder.waypointList(waypoints).waypointCount(waypoints.size());
+
+        }
+
 
         // Add Actions at each waypoint later..
+        else
+        {
+            waypointMissionBuilder.finishedAction(mFinishedAction)
+                    .headingMode(mHeadingMode)
+                    .autoFlightSpeed(mSpeed)
+                    .maxFlightSpeed(mSpeed)
+                    .flightPathMode(WaypointMissionFlightPathMode.NORMAL);
+
+        }
 
 
+    }
 
+    private void circularMission()
+    {
+        CircleOptions circleOptions = new CircleOptions();
+        circleOptions.center(homeBase);
+        circleOptions.radius(100);
+        circleOptions.fillColor(0x33FF0000);
+        circleOptions.strokeColor(Color.BLUE);
+        circleOptions.strokeWidth(3);
 
-
+        missionCircle = gMap.addCircle(circleOptions);
 
     }
 
     private void configWayPointMission()
     {
+
+        String pol_points = null;
 
         if (waypointMissionBuilder == null){
 
@@ -601,12 +654,18 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 
             }
 
+            POLYGON_POINTS = waypointMissionBuilder.getWaypointList().size();
+
             // Set Altitude of final waypoint to 10 metres;
             waypointMissionBuilder.getWaypointList().get(waypointMissionBuilder.getWaypointList().size() - 1).altitude = 10;
             waypointMissionBuilder.getWaypointList().get(waypointMissionBuilder.getWaypointList().size() - 1).addAction(new WaypointAction(WaypointActionType.GIMBAL_PITCH, -60));
 
            // Return number of Polygon Points;
-            POLYGON_POINTS = waypointMissionBuilder.getWaypointList().size();
+
+            drawPolygon();
+            // Remove
+             pol_points = Integer.toString(POLYGON_POINTS);
+
 
            // String Altitude_Value =  String.valueOf(waypointMissionBuilder.getWaypointList().get(waypointMissionBuilder.getWaypointList().size() - 1).altitude);
 
@@ -615,7 +674,7 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 
         DJIError error = getWaypointMissionOperator().loadMission(waypointMissionBuilder.build());
         if (error == null) {
-            setResultToToast("loadWaypoint succeeded");
+            setResultToToast(pol_points + " Waypoints added");
         } else {
             setResultToToast("loadWaypoint failed " + error.getDescription());
         }
@@ -629,7 +688,6 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
             public void onResult(DJIError error) {
                 if (error == null)
                 {
-                    drawPolygon();
                     setResultToToast("Mission upload successfully!");
                 } else {
                     setResultToToast("Mission upload failed, error: " + error.getDescription() + " retrying...");
@@ -650,21 +708,32 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 
         for (int i = 0; i < POLYGON_POINTS; i++)
         {
-            polygonOptions.add(mMarkers.get(i).getPosition());
+            //polygonOptions.add(mMarkers.get(i).getPosition());
+            polygonOptions.add(markers.get(i).getPosition());
+
         }
 
-         shape = gMap.addPolygon(polygonOptions);
+        shape = gMap.addPolygon(polygonOptions);
 
     }
 
+    // remove value type of concurrent hashmap.
     private void removePolyElements()
     {
-        for (Marker marker : mMarkers)
+//        for (Marker marker : mMarkers.values())
+//        {
+//            marker.remove();
+//        }
+//
+//        mMarkers.clear();
+//        shape.remove();
+//        shape = null;
+        for (Marker marker : markers)
         {
             marker.remove();
         }
 
-        mMarkers.clear();
+        markers.clear();
         shape.remove();
         shape = null;
     }
