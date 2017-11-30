@@ -24,6 +24,12 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal">
         <Button
+            android:id="@+id/home"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Set Home"
+            android:layout_weight="1"/>
+        <Button
             android:id="@+id/locate"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -79,21 +85,15 @@
 
         <Button
             android:id="@+id/polygon"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Polygon"
-            android:layout_weight="0.9"/>
+           android:layout_weight="1"/>
         <Button
-            android:id="@+id/radius"
-            android:layout_width="match_parent"
+            android:id="@+id/circular"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Radius"
-            android:layout_weight="1.2"/>
-        <Button
-            android:id="@+id/rectangular"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Rectangular"
+            android:text="circular"
             android:layout_weight="1"/>
 
     </LinearLayout>
