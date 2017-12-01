@@ -103,32 +103,37 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 
     Polygon shape;
 
-      // Home point for the Drone
-    private LatLng homeBase ;
+    // Home point for the Drone
+    private LatLng homeBase;
 
     private List<Waypoint> waypointList = new ArrayList<>();
+    private List<Waypoint> coordinateWaypointList = new ArrayList<>();
+    private List<Waypoint> circularWaypointList = new ArrayList<>();
 
-    public static WaypointMission.Builder waypointMissionBuilder ;
+    public static WaypointMission.Builder waypointMissionBuilder;
     private FlightController mFlightController;
     private WaypointMissionOperator instance;
     private WaypointMissionFinishedAction mFinishedAction = WaypointMissionFinishedAction.NO_ACTION;
     private WaypointMissionHeadingMode mHeadingMode = WaypointMissionHeadingMode.AUTO;
     private FusedLocationProviderClient mFusedLocationClient;
 
+    // Instantiate dialogSample class;
+    DialogSample dialogSample = new DialogSample();
+
 
     @Override
-    protected void onResume(){
+    protected void onResume() {
         super.onResume();
         initFlightController();
     }
 
     @Override
-    protected void onPause(){
+    protected void onPause() {
         super.onPause();
     }
 
     @Override
-    protected void onDestroy(){
+    protected void onDestroy() {
         unregisterReceiver(mReceiver);
         removeListener();
         super.onDestroy();
@@ -137,11 +142,12 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
     /**
      * @Description : RETURN Button RESPONSE FUNCTION
      */
-    public void onReturn(View view){
+    public void onReturn(View view) {
         Log.d(TAG, "onReturn");
         this.finish();
     }
-    private void setResultToToast(final String string){
+
+    private void setResultToToast(final String string) {
         MainActivity.this.runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -152,8 +158,6 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 
     // Function to initialise the MainActivity page and set listeners for all buttons
     private void initUI() {
-
-
 
         locate = (Button) findViewById(R.id.locate);
         add = (Button) findViewById(R.id.add);
@@ -186,9 +190,8 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
        1 degree Latitude = Perimeter / 360
        Therefore 1 metre offset = 360 / Perimeter
      */
-    public static  double calcLongitudeOffset(double latitude)
-    {
-        return ONE_METER_OFFSET / Math.cos(latitude * Math.PI/ 180.0f);
+    public static double calcLongitudeOffset(double latitude) {
+        return ONE_METER_OFFSET / Math.cos(latitude * Math.PI / 180.0f);
     }
 
     @Override
@@ -222,7 +225,6 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         initUI();
 
 
-
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
@@ -239,13 +241,12 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         }
     };
 
-    private void onProductConnectionChange()
-    {
+    private void onProductConnectionChange() {
         initFlightController();
 
     }
 
-// Initialises the onboard flight controller and updates the drone location.
+    // Initialises the onboard flight controller and updates the drone location.
     private void initFlightController() {
 
         BaseProduct product = DJIDemoApplication.getProductInstance();
@@ -272,7 +273,7 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 
     //Add Listener for WaypointMissionOperator
     private void addListener() {
-        if (getWaypointMissionOperator() != null){
+        if (getWaypointMissionOperator() != null) {
             getWaypointMissionOperator().addListener(eventNotificationListener);
         }
     }
@@ -325,20 +326,19 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 
     @Override
     public void onMapClick(LatLng point) {
-        if (isAdd == true){
+        if (isAdd == true) {
             markWaypoint(point);
             Waypoint mWaypoint = new Waypoint(point.latitude, point.longitude, altitude);
             //Add Waypoints to Waypoint arraylist;
             if (waypointMissionBuilder != null) {
                 waypointList.add(mWaypoint);
                 waypointMissionBuilder.waypointList(waypointList).waypointCount(waypointList.size());
-            }else
-            {
+            } else {
                 waypointMissionBuilder = new WaypointMission.Builder();
                 waypointList.add(mWaypoint);
                 waypointMissionBuilder.waypointList(waypointList).waypointCount(waypointList.size());
             }
-        }else{
+        } else {
             setResultToToast("Cannot Add Waypoint");
         }
     }
@@ -348,8 +348,7 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
     }
 
     // Update the drone location based on states from MCU.
-    private void updateDroneLocation()
-    {
+    private void updateDroneLocation() {
 
         LatLng pos = new LatLng(droneLocationLat, droneLocationLng);
         //Create MarkerOptions object
@@ -364,8 +363,7 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
                     droneMarker.remove();
                 }
 
-                if (checkGpsCoordinates(droneLocationLat, droneLocationLng))
-                {
+                if (checkGpsCoordinates(droneLocationLat, droneLocationLng)) {
                     droneMarker = gMap.addMarker(markerOptions);
 
                 }
@@ -374,7 +372,7 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
     }
 
     // Set Markers
-    private void markWaypoint(LatLng point){
+    private void markWaypoint(LatLng point) {
         //Create MarkerOptions object
         MarkerOptions markerOptions = new MarkerOptions();
         markerOptions.position(point);
@@ -383,15 +381,13 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         markers.add(marker);
 
         // Draw a polygon if number of markers exceeds three.
-        if (markers.size() >= 3)
-        {
+        if (markers.size() >= 3) {
             drawPolygon(markers.size());
         }
 
     }
 
-    private void markHomePoint(LatLng point)
-    {
+    private void markHomePoint(LatLng point) {
         //Create MarkerOptions object
         MarkerOptions markerOptions = new MarkerOptions();
         markerOptions.position(point);
@@ -399,80 +395,75 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         gMap.addMarker(markerOptions);
 
     }
+
     @Override
-    public void onClick(View v)
-    {
+    public void onClick(View v) {
         // Return current drone coordinates to write on-screen
         String droneLat = Double.toString(droneLocationLat);
         String droneLon = Double.toString(droneLocationLng);
         switch (v.getId()) {
 
-            case R.id.home:
-            {
-               // setHomeLocationCurrentLocation();
+            case R.id.home: {
+                // setHomeLocationCurrentLocation();
                 setHomeLocation();
             }
-            case R.id.locate:
-            {
+            case R.id.locate: {
 
                 updateDroneLocation();
                 cameraUpdate(); // Locate the drone's place
-                Toast.makeText(getApplicationContext(), droneLat + ", " + droneLon, Toast.LENGTH_LONG).show();
+                //Toast.makeText(getApplicationContext(), droneLat + ", " + droneLon, Toast.LENGTH_LONG).show();
                 getHomeLocation();
                 break;
             }
-            case R.id.add:
-            {
+            case R.id.add: {
                 enableDisableAdd();
                 break;
             }
-            case R.id.clear:
-            {
+            case R.id.clear: {
 
                 runOnUiThread(new Runnable() {
                     @Override
-                    public void run()
-                    {
+                    public void run() {
                         gMap.clear();
-                        removePolyElements();
+
 
                     }
 
                 });
-                     waypointList.clear();
-                     waypointMissionBuilder.waypointList(waypointList);
-                     updateDroneLocation();
-                     markHomePoint(homeBase);
+                circularWaypointList.clear();
+                coordinateWaypointList.clear();
+                waypointList.clear();
+                waypointMissionBuilder.waypointList(waypointList);
+                updateDroneLocation();
+                removePolyElements();
                 break;
             }
-            case R.id.config:{
+            case R.id.config: {
                 showSettingDialog();
                 break;
             }
 
-            case R.id.polygon:
-            {
+            case R.id.polygon: {
                 showSettingDialog();
                 updateDroneLocation();
                 cameraUpdate();
                 coordinateWaypointMission();
                 break;
             }
-            case R.id.upload:{
+            case R.id.upload: {
                 uploadWayPointMission();
                 break;
             }
-            case R.id.start:{
+            case R.id.start: {
                 startWaypointMission();
                 break;
             }
-            case R.id.stop:{
+            case R.id.stop: {
                 stopWaypointMission();
                 break;
             }
 
-            case R.id.circular:
-            {
+            case R.id.circular: {
                 showSettingDialog();
                 circularMission();
                 break;
@@ -482,7 +473,15 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         }
     }
 
-    private void cameraUpdate(){
+    private void openDialog() {
+
+        dialogSample.show(getSupportFragmentManager(), "Flight Parameters");
+        mSpeed = (float) dialogSample.returnSpeed();
+        altitude = (float) dialogSample.returnAltitude();
+
+    }
+
+    private void cameraUpdate() {
         LatLng pos = new LatLng(droneLocationLat, droneLocationLng);
         float zoomLevel = (float) 18.0;
         CameraUpdate cu = CameraUpdateFactory.newLatLngZoom(pos, zoomLevel);
@@ -490,33 +489,33 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 
     }
 
-    private void enableDisableAdd(){
+    private void enableDisableAdd() {
         if (isAdd == false) {
             isAdd = true;
             add.setText("Exit");
-        }else{
+        } else {
             isAdd = false;
             add.setText("Add");
         }
     }
 
-    private void showSettingDialog(){
-        LinearLayout wayPointSettings = (LinearLayout)getLayoutInflater().inflate(R.layout.dialog_waypointsetting, null);
+    private void showSettingDialog() {
+        LinearLayout wayPointSettings = (LinearLayout) getLayoutInflater().inflate(R.layout.dialog_waypointsetting, null);
 
         final TextView wpAltitude_TV = (TextView) wayPointSettings.findViewById(R.id.altitude);
         RadioGroup speed_RG = (RadioGroup) wayPointSettings.findViewById(R.id.speed);
         RadioGroup actionAfterFinished_RG = (RadioGroup) wayPointSettings.findViewById(R.id.actionAfterFinished);
         RadioGroup heading_RG = (RadioGroup) wayPointSettings.findViewById(R.id.heading);
 
-        speed_RG.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener(){
+        speed_RG.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
 
             @Override
             public void onCheckedChanged(RadioGroup group, int checkedId) {
-                if (checkedId == R.id.lowSpeed){
+                if (checkedId == R.id.lowSpeed) {
                     mSpeed = 3.0f;
-                } else if (checkedId == R.id.MidSpeed){
+                } else if (checkedId == R.id.MidSpeed) {
                     mSpeed = 5.0f;
-                } else if (checkedId == R.id.HighSpeed){
+                } else if (checkedId == R.id.HighSpeed) {
                     mSpeed = 10.0f;
                 }
             }
@@ -528,13 +527,13 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
             @Override
             public void onCheckedChanged(RadioGroup group, int checkedId) {
                 Log.d(TAG, "Select finish action");
-                if (checkedId == R.id.finishNone){
+                if (checkedId == R.id.finishNone) {
                     mFinishedAction = WaypointMissionFinishedAction.NO_ACTION;
-                } else if (checkedId == R.id.finishGoHome){
+                } else if (checkedId == R.id.finishGoHome) {
                     mFinishedAction = WaypointMissionFinishedAction.GO_HOME;
-                } else if (checkedId == R.id.finishAutoLanding){
+                } else if (checkedId == R.id.finishAutoLanding) {
                     mFinishedAction = WaypointMissionFinishedAction.AUTO_LAND;
-                } else if (checkedId == R.id.finishToFirst){
+                } else if (checkedId == R.id.finishToFirst) {
                     mFinishedAction = WaypointMissionFinishedAction.GO_FIRST_WAYPOINT;
                 }
             }
@@ -561,16 +560,16 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         new AlertDialog.Builder(this)
                 .setTitle("")
                 .setView(wayPointSettings)
-                .setPositiveButton("Finish",new DialogInterface.OnClickListener(){
+                .setPositiveButton("Finish", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
 
                         String altitudeString = wpAltitude_TV.getText().toString();
                         altitude = Integer.parseInt(nulltoIntegerDefalt(altitudeString));
-                        Log.e(TAG,"altitude "+altitude);
-                        Log.e(TAG,"speed "+mSpeed);
-                        Log.e(TAG, "mFinishedAction "+mFinishedAction);
-                        Log.e(TAG, "mHeadingMode "+mHeadingMode);
-                        configWayPointMission();
+                        Log.e(TAG, "altitude " + altitude);
+                        Log.e(TAG, "speed " + mSpeed);
+                        Log.e(TAG, "mFinishedAction " + mFinishedAction);
+                        Log.e(TAG, "mHeadingMode " + mHeadingMode);
+                        //configWayPointMission();
                     }
 
                 })
@@ -584,81 +583,22 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
                 .show();
     }
 
-    String nulltoIntegerDefalt(String value){
-        if(!isIntValue(value)) value="0";
+    String nulltoIntegerDefalt(String value) {
+        if (!isIntValue(value)) value = "0";
         return value;
     }
 
-    boolean isIntValue(String val)
-    {
+    boolean isIntValue(String val) {
         try {
-            val=val.replace(" ","");
+            val = val.replace(" ", "");
             Integer.parseInt(val);
-        } catch (Exception e) {return false;}
+        } catch (Exception e) {
+            return false;
+        }
         return true;
     }
 
-    private void coordinateWaypointMission()
-    {
-
-        if (waypointMissionBuilder == null)
-        {
-
-            waypointMissionBuilder = new WaypointMission.Builder().finishedAction(mFinishedAction)
-                    .headingMode(mHeadingMode)
-                    .autoFlightSpeed(mSpeed)
-                    .maxFlightSpeed(mSpeed)
-                    .flightPathMode(WaypointMissionFlightPathMode.NORMAL);
-
-
-            // set Polygon points to 5
-           // POLYGON_POINTS = 5;
-            List<Waypoint> waypoints = new LinkedList<>();
-            // Use to add waypoint markers to the Map...
-            LatLng northPoint = new LatLng(homeBase.latitude + 10 * ONE_METER_OFFSET, homeBase.longitude);
-            LatLng southPoint = new LatLng(homeBase.latitude -10 * ONE_METER_OFFSET, homeBase.longitude);
-            LatLng westPoint = new LatLng(homeBase.latitude, homeBase.longitude - 10 * (calcLongitudeOffset(homeBase.latitude)));
-            LatLng eastPoint  =   new LatLng(homeBase.latitude, homeBase.longitude + 10 * (calcLongitudeOffset(homeBase.latitude)));
-
-            // Calculate Waypoint Markers
-            Waypoint northWaypoint = new Waypoint(homeBase.latitude + 10 * ONE_METER_OFFSET, homeBase.longitude, 10f  );
-            Waypoint southWaypoint = new Waypoint(homeBase.latitude -10 * ONE_METER_OFFSET, homeBase.longitude, 10f);
-            Waypoint eastWaypoint =  new Waypoint(homeBase.latitude, homeBase.longitude + 10 * (calcLongitudeOffset(homeBase.latitude)), 10f );
-            Waypoint westWaypoint = new Waypoint(homeBase.latitude, homeBase.longitude - 10 * (calcLongitudeOffset(homeBase.latitude)), 10f );
-
-            // Optimise later with for/foreach loop
-            markWaypoint(northPoint);
-            markWaypoint(eastPoint);
-            markWaypoint(southPoint);
-            markWaypoint(westPoint);
-
-            waypoints.add(northWaypoint);
-            waypoints.add(southWaypoint);
-            waypoints.add(westWaypoint);
-            waypoints.add(eastWaypoint);
-
-            waypointMissionBuilder.waypointList(waypoints).waypointCount(waypoints.size());
-
-        }
-
-        // Add Actions at each waypoint later..
-        else
-        {
-            waypointMissionBuilder.finishedAction(mFinishedAction)
-                    .headingMode(mHeadingMode)
-                    .autoFlightSpeed(mSpeed)
-                    .maxFlightSpeed(mSpeed)
-                    .flightPathMode(WaypointMissionFlightPathMode.NORMAL);
-        }
-
-    }
-
-    /*
-    Creates a circular mission of 10 way points with each point being 100m
-    away from the home point.
-     */
-    private void circularMission()
-    {
+    private void coordinateWaypointMission() {
 
         if (waypointMissionBuilder == null) {
 
@@ -667,62 +607,68 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
                     .autoFlightSpeed(mSpeed)
                     .maxFlightSpeed(mSpeed)
                     .flightPathMode(WaypointMissionFlightPathMode.NORMAL);
+        }
 
-            double distance = 0.1; // Distance being travelled
-            double earthRadius = 6371; // Earth Radius
+        // Add Actions at each waypoint later..
+        else {
+            waypointMissionBuilder.finishedAction(mFinishedAction)
+                    .headingMode(mHeadingMode)
+                    .autoFlightSpeed(mSpeed)
+                    .maxFlightSpeed(mSpeed)
+                    .flightPathMode(WaypointMissionFlightPathMode.NORMAL);
+        }
 
+        // Use to add waypoint markers to the Map...
+        LatLng northPoint = new LatLng(homeBase.latitude + 10 * ONE_METER_OFFSET, homeBase.longitude);
+        LatLng southPoint = new LatLng(homeBase.latitude - 10 * ONE_METER_OFFSET, homeBase.longitude);
+        LatLng westPoint = new LatLng(homeBase.latitude, homeBase.longitude - 10 * (calcLongitudeOffset(homeBase.latitude)));
+        LatLng eastPoint = new LatLng(homeBase.latitude, homeBase.longitude + 10 * (calcLongitudeOffset(homeBase.latitude)));
 
-            double finalLat = 0;
-            double finalLon = 0;
+        // Calculate Waypoint Markers
+        Waypoint northWaypoint = new Waypoint(homeBase.latitude + 10 * ONE_METER_OFFSET, homeBase.longitude, altitude);
+        Waypoint southWaypoint = new Waypoint(homeBase.latitude - 10 * ONE_METER_OFFSET, homeBase.longitude, altitude);
+        Waypoint eastWaypoint = new Waypoint(homeBase.latitude, homeBase.longitude + 10 * (calcLongitudeOffset(homeBase.latitude)), altitude);
+        Waypoint westWaypoint = new Waypoint(homeBase.latitude, homeBase.longitude - 10 * (calcLongitudeOffset(homeBase.latitude)), altitude);
 
-            double angularDistance = distance / earthRadius;  // angular distance
-            int numPoints = 10;
-            //double slice = 360/numPoints;
-            double slice = (2 * Math.PI) / numPoints; // Bearing clockwise from north
-            double Lat = homeBase.latitude;
-            double Lon = homeBase.longitude;
+        // Optimise later with for/foreach loop
+        markWaypoint(northPoint);
+        markWaypoint(eastPoint);
+        markWaypoint(southPoint);
+        markWaypoint(westPoint);
 
-            ArrayList<LatLng> centerArray = new ArrayList<>(); // Store bearing points.
-            List<Waypoint> waypoints = new LinkedList<>();
-            double homeLat = Math.toRadians(Lat);
-            double homeLon = Math.toRadians(Lon);
+        coordinateWaypointList.add(northWaypoint);
+        coordinateWaypointList.add(southWaypoint);
+        coordinateWaypointList.add(westWaypoint);
+        coordinateWaypointList.add(eastWaypoint);
 
+        waypointMissionBuilder.waypointList(coordinateWaypointList).waypointCount(coordinateWaypointList.size());
 
-            for (int i = 0; i < numPoints; i++) {
+        DJIError error = getWaypointMissionOperator().loadMission(waypointMissionBuilder.build());
+        if (error == null) {
+            setResultToToast("Coordinate loadWaypoint succeeded");
+        } else {
+            setResultToToast("Coordinate loadWaypoint failed " + error.getDescription());
+        }
 
-                double bearing = slice * i;
-                finalLat = Math.asin(Math.sin(homeLat) * Math.cos(angularDistance) + Math.cos(homeLat) * Math.sin(angularDistance) * Math.cos(bearing));
+    }
 
-                finalLon = homeLon + Math.atan2(Math.sin(bearing) * Math.sin(angularDistance) * Math.cos(homeLat), Math.cos(angularDistance) - Math.sin(homeLat) * Math.sin(finalLat));
+    /*
+    Creates a circular mission of 10 way points with each point being 100m
+    away from the home point.
+     */
+    private void circularMission() {
 
-                finalLat = Math.toDegrees(finalLat);
-                finalLon = Math.toDegrees(finalLon);
+        if (waypointMissionBuilder == null) {
 
-                centerArray.add(new LatLng(finalLat, finalLon));
-
-            }
-
-            PolygonOptions polygonOptions = new PolygonOptions();
-            polygonOptions.fillColor(0x330000FF);
-            polygonOptions.strokeWidth(3);
-            polygonOptions.strokeColor(Color.BLUE);
-
-            for (int i = 0; i < centerArray.size(); i++)
-            {
-                // Add waypoints
-                waypoints.add(new Waypoint(centerArray.get(i).latitude, centerArray.get(i).longitude, 10f));
-                // Add coordinates to draw a polygon
-                polygonOptions.add(new LatLng(centerArray.get(i).latitude, centerArray.get(i).longitude));
-                // set marker of for each coordinate
-                markWaypoint(new LatLng(centerArray.get(i).latitude, centerArray.get(i).longitude));
-            }
-
-            waypointMissionBuilder.waypointList(waypoints).waypointCount(waypoints.size());
-
-            shape = gMap.addPolygon(polygonOptions);
+            waypointMissionBuilder = new WaypointMission.Builder().finishedAction(mFinishedAction)
+                    .headingMode(mHeadingMode)
+                    .autoFlightSpeed(mSpeed)
+                    .maxFlightSpeed(mSpeed)
+                    .flightPathMode(WaypointMissionFlightPathMode.NORMAL);
         }
 
         else
+
         {
             waypointMissionBuilder.finishedAction(mFinishedAction)
                     .headingMode(mHeadingMode)
@@ -730,6 +676,68 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
                     .maxFlightSpeed(mSpeed)
                     .flightPathMode(WaypointMissionFlightPathMode.NORMAL);
         }
+
+        double distance = 0.1; // Distance being travelled
+        double earthRadius = 6371; // Earth Radius
+
+
+        double finalLat = 0;
+        double finalLon = 0;
+
+        double angularDistance = distance / earthRadius;  // angular distance
+        int numPoints = 10;
+        //double slice = 360/numPoints;
+        double slice = (2 * Math.PI) / numPoints; // Bearing clockwise from north
+        double Lat = homeBase.latitude;
+        double Lon = homeBase.longitude;
+
+        ArrayList<LatLng> centerArray = new ArrayList<>(); // Store bearing points.
+
+        double homeLat = Math.toRadians(Lat);
+        double homeLon = Math.toRadians(Lon);
+
+
+        for (int i = 0; i < numPoints; i++) {
+
+            double bearing = slice * i;
+            finalLat = Math.asin(Math.sin(homeLat) * Math.cos(angularDistance) + Math.cos(homeLat) * Math.sin(angularDistance) * Math.cos(bearing));
+
+            finalLon = homeLon + Math.atan2(Math.sin(bearing) * Math.sin(angularDistance) * Math.cos(homeLat), Math.cos(angularDistance) - Math.sin(homeLat) * Math.sin(finalLat));
+
+            finalLat = Math.toDegrees(finalLat);
+            finalLon = Math.toDegrees(finalLon);
+
+            centerArray.add(new LatLng(finalLat, finalLon));
+
+        }
+
+        PolygonOptions polygonOptions = new PolygonOptions();
+        polygonOptions.fillColor(0x330000FF);
+        polygonOptions.strokeWidth(3);
+        polygonOptions.strokeColor(Color.BLUE);
+
+        for (int i = 0; i < centerArray.size(); i++) {
+            // Add waypoints
+            circularWaypointList.add(new Waypoint(centerArray.get(i).latitude, centerArray.get(i).longitude, altitude));
+            // Add coordinates to draw a polygon
+            polygonOptions.add(new LatLng(centerArray.get(i).latitude, centerArray.get(i).longitude));
+            // set marker of for each coordinate
+            markWaypoint(new LatLng(centerArray.get(i).latitude, centerArray.get(i).longitude));
+        }
+
+        waypointMissionBuilder.waypointList(circularWaypointList).waypointCount(circularWaypointList.size());
+
+        shape = gMap.addPolygon(polygonOptions);
+
+        DJIError error = getWaypointMissionOperator().loadMission(waypointMissionBuilder.build());
+        if (error == null) {
+            setResultToToast("Circular loadWaypoint succeeded");
+        } else {
+            setResultToToast("Circular loadWaypoint failed " + error.getDescription());
+        }
+
+
+
 
     }
 
@@ -910,11 +918,11 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
     private void startWaypointMission()
     {
         //Check current state of mission update
-     while(getWaypointMissionOperator().getCurrentState() == WaypointMissionState.UPLOADING)
+    if(getWaypointMissionOperator().getCurrentState() == WaypointMissionState.UPLOADING)
      {
-         setResultToToast("Please wait, Mission is uploading");
+         Toast.makeText(getApplicationContext(),"Please wait, Mission is uploading", Toast.LENGTH_SHORT).show();
      }
-     if(getWaypointMissionOperator().getCurrentState() == WaypointMissionState.READY_TO_EXECUTE)
+     else if(getWaypointMissionOperator().getCurrentState() == WaypointMissionState.READY_TO_EXECUTE)
      {
          getWaypointMissionOperator().startMission(new CommonCallbacks.CompletionCallback() {
              @Override
@@ -952,25 +960,25 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
             }
         }
 
-//        mFusedLocationClient.getLastLocation()
-//                .addOnSuccessListener(this, new OnSuccessListener<Location>()
-//                {
-//                    @Override
-//                    public void onSuccess(Location location) {
-//                        // Got last known location. In some rare situations this can be null.
-//                        if (location != null) {
-//                            homeBase = new LatLng(location.getLatitude(), location.getLongitude());
-//                            CameraUpdate update = CameraUpdateFactory.newLatLngZoom(homeBase, 19);
-//                            gMap.animateCamera(update);
-//                            markHomePoint(homeBase);
-//                        } else if (location == null) {
-//                            Toast.makeText(getApplicationContext(), "Can't get current location", Toast.LENGTH_LONG).show();
-//                        }
-//                    }
-//                });
-        homeBase = new LatLng(52.761155 , -1.247651);
-        gMap.addMarker(new MarkerOptions().position(homeBase).title("Marker in Shenzhen"));
-        gMap.moveCamera(CameraUpdateFactory.newLatLng(homeBase));
+        mFusedLocationClient.getLastLocation()
+                .addOnSuccessListener(this, new OnSuccessListener<Location>()
+                {
+                    @Override
+                    public void onSuccess(Location location) {
+                        // Got last known location. In some rare situations this can be null.
+                        if (location != null) {
+                            homeBase = new LatLng(location.getLatitude(), location.getLongitude());
+                            CameraUpdate update = CameraUpdateFactory.newLatLngZoom(homeBase, 19);
+                            gMap.animateCamera(update);
+                            markHomePoint(homeBase);
+                        } else if (location == null) {
+                            Toast.makeText(getApplicationContext(), "Can't get current location", Toast.LENGTH_LONG).show();
+                        }
+                    }
+                });
+//        homeBase = new LatLng(52.761155 , -1.247651);
+//        gMap.addMarker(new MarkerOptions().position(homeBase).title("Marker in Shenzhen"));
+//        gMap.moveCamera(CameraUpdateFactory.newLatLng(homeBase));
     }
 
 
