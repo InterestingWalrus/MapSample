@@ -120,6 +120,8 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
     // Instantiate dialogSample class;
     DialogSample dialogSample = new DialogSample();
 
+    private int missionType;
+
 
     @Override
     protected void onResume() {
@@ -443,11 +445,13 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
                 break;
             }
 
-            case R.id.polygon: {
-                showSettingDialog();
-                updateDroneLocation();
-                cameraUpdate();
-                coordinateWaypointMission();
+            case R.id.polygon:
+            {
+                missionType = 1;
+               showSettingDialog();
+               updateDroneLocation();
+               cameraUpdate();
+
                 break;
             }
             case R.id.upload: {
@@ -463,9 +467,10 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
                 break;
             }
 
-            case R.id.circular: {
+            case R.id.circular:
+             {
+                missionType = 2;
                 showSettingDialog();
-                circularMission();
                 break;
             }
             default:
@@ -569,7 +574,21 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
                         Log.e(TAG, "speed " + mSpeed);
                         Log.e(TAG, "mFinishedAction " + mFinishedAction);
                         Log.e(TAG, "mHeadingMode " + mHeadingMode);
-                        //configWayPointMission();
+
+                        if(missionType ==1)
+                        {
+                            coordinateWaypointMission();
+                        }
+
+                        else if (missionType == 2)
+                        {
+                            circularMission();
+                        }
+
+                        else
+                        {
+                            setResultToToast("Invalid Mission Type");
+                        }
                     }
 
                 })
@@ -680,7 +699,6 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         double distance = 0.1; // Distance being travelled
         double earthRadius = 6371; // Earth Radius
 
-
         double finalLat = 0;
         double finalLon = 0;
 
@@ -736,9 +754,6 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
             setResultToToast("Circular loadWaypoint failed " + error.getDescription());
         }
 
-
-
-
     }
 
     private void configWayPointMission()
@@ -761,7 +776,6 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
                     .autoFlightSpeed(mSpeed)
                     .maxFlightSpeed(mSpeed)
                     .flightPathMode(WaypointMissionFlightPathMode.NORMAL);
-
         }
 
         if (waypointMissionBuilder.getWaypointList().size() > 0)
@@ -917,12 +931,14 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 
     private void startWaypointMission()
     {
+
         //Check current state of mission update
     if(getWaypointMissionOperator().getCurrentState() == WaypointMissionState.UPLOADING)
      {
-         Toast.makeText(getApplicationContext(),"Please wait, Mission is uploading", Toast.LENGTH_SHORT).show();
+         setResultToToast("Please wait, Mission is uploading");
+
      }
-     else if(getWaypointMissionOperator().getCurrentState() == WaypointMissionState.READY_TO_EXECUTE)
+     if(getWaypointMissionOperator().getCurrentState() == WaypointMissionState.READY_TO_EXECUTE)
      {
          getWaypointMissionOperator().startMission(new CommonCallbacks.CompletionCallback() {
              @Override
@@ -930,6 +946,17 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
                  setResultToToast("Mission Start: " + (error == null ? "Successfully" : error.getDescription()));
              }
          });
+     }
+
+     else if (getWaypointMissionOperator().getCurrentState() == WaypointMissionState.EXECUTING)
+     {
+         getWaypointMissionOperator().startMission(new CommonCallbacks.CompletionCallback() {
+             @Override
+             public void onResult(DJIError error) {
+                 setResultToToast("Mission in: " + (error == null ? "Progress" : error.getDescription()));
+             }
+         });
+
      }
     }
 
@@ -980,6 +1007,4 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 //        gMap.addMarker(new MarkerOptions().position(homeBase).title("Marker in Shenzhen"));
 //        gMap.moveCamera(CameraUpdateFactory.newLatLng(homeBase));
     }
-
-
 }
