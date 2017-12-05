@@ -173,4 +173,50 @@
                 android:text="Use Waypoint"/>
         </RadioGroup>
     </LinearLayout>
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="10dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Low Battery Behaviour:"/>
+    </LinearLayout>
+
+    <!--<LinearLayout-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:orientation="horizontal" >-->
+        <!--<RadioGroup-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:orientation="horizontal"-->
+            <!--android:id="@+id/batteryBehaviour"-->
+            <!--android:layout_gravity="center_horizontal">-->
+            <!--<RadioButton-->
+                <!--android:id="@+id/batteryFlyNormally"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:textSize="5pt"-->
+                <!--android:text="Fly Normally"/>-->
+            <!--<RadioButton-->
+                <!--android:id="@+id/batteryGoHome"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:textSize="5pt"-->
+                <!--android:text="Go Home"/>-->
+            <!--<RadioButton-->
+                <!--android:id="@+id/batteryLand"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:textSize="5pt"-->
+                <!--android:text="Land Immediately"/>-->
+        <!--</RadioGroup>-->
+    <!--</LinearLayout>-->
 </LinearLayout>

@@ -11,6 +11,8 @@ package com.dji.MapDemo.GoogleMap;
         import android.graphics.Color;
         import android.location.Location;
         import android.os.Build;
+        import android.provider.MediaStore;
+        import android.support.annotation.IntRange;
         import android.support.annotation.NonNull;
         import android.support.annotation.Nullable;
         import android.support.v4.app.ActivityCompat;
@@ -42,6 +44,8 @@ package com.dji.MapDemo.GoogleMap;
         import com.google.android.gms.maps.model.PolygonOptions;
         import com.google.android.gms.tasks.OnSuccessListener;
 
+        import org.w3c.dom.Text;
+
         import java.util.ArrayList;
         import java.util.LinkedList;
         import java.util.List;
@@ -49,6 +53,8 @@ package com.dji.MapDemo.GoogleMap;
         import java.util.concurrent.ConcurrentHashMap;
 
 
+        import dji.common.battery.BatteryState;
+        import dji.common.flightcontroller.BatteryThresholdBehavior;
         import dji.common.flightcontroller.FlightControllerState;
         import dji.common.mission.waypoint.Waypoint;
         import dji.common.mission.waypoint.WaypointAction;
@@ -117,16 +123,41 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
     private WaypointMissionHeadingMode mHeadingMode = WaypointMissionHeadingMode.AUTO;
     private FusedLocationProviderClient mFusedLocationClient;
 
+
+    private int batteryChargeRemaining;
+    private int batteryChargeInPercent;
+    private int batteryVoltage;
+    private int batteryCurrent;
+    private float batteryTemp;
+
+    private TextView mBatteryChargeRemaining;
+    private TextView mBatteryChargeInPercent;
+    private TextView mBatteryVoltage;
+    private TextView mBatteryCurrent;
+    private TextView mBatteryTemp;
+
+
+    private int lowBattery;
+    private int seriousLowBattery;
+    final private  int lowBatteryThreshold = 20;
+    final private  int seriousLowBatteryThreshold = 10;
+
+
+
+
+
     // Instantiate dialogSample class;
     DialogSample dialogSample = new DialogSample();
 
     private int missionType;
 
 
+
     @Override
     protected void onResume() {
         super.onResume();
         initFlightController();
+        initBattery();
     }
 
     @Override
@@ -171,6 +202,12 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         polygon = (Button) findViewById(R.id.polygon);
         circle = (Button) findViewById(R.id.circular);
         home = (Button) findViewById(R.id.home);
+
+        mBatteryChargeInPercent = (TextView) findViewById(R.id.BatteryChargeRemaining);
+        mBatteryTemp = (TextView) findViewById(R.id.BatteryTemp);
+        mBatteryChargeRemaining = (TextView) findViewById( R.id.BatteryChargeRemaining);
+        mBatteryCurrent = (TextView) findViewById(R.id.BatteryCurrent);
+        mBatteryVoltage = (TextView) findViewById(R.id.BatteryVoltage);
 
         locate.setOnClickListener(this);
         add.setOnClickListener(this);
@@ -245,6 +282,54 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 
     private void onProductConnectionChange() {
         initFlightController();
+        initBattery();
+
+
+    }
+
+    private void initBattery() {
+
+        BaseProduct product = DJIDemoApplication.getProductInstance();
+        if (product != null && product.isConnected()) {
+            if (product instanceof Aircraft)
+            {
+                product.getBattery().setStateCallback(new BatteryState.Callback() {
+                    @Override
+                    public void onUpdate(BatteryState batteryState)
+                    {
+                        batteryChargeInPercent = batteryState.getChargeRemainingInPercent();
+                        batteryChargeRemaining = batteryState.getChargeRemaining();
+                        batteryVoltage = batteryState.getVoltage();
+                        batteryCurrent = batteryState.getCurrent();
+                        batteryTemp = batteryState.getTemperature();
+
+                        mBatteryTemp.setText(Float.toString(batteryTemp) + " \u00b0" + "C");
+                        mBatteryCurrent.setText(batteryCurrent + " mA");
+                        mBatteryChargeRemaining.setText(batteryChargeRemaining + " mAh");
+                        mBatteryVoltage.setText(batteryVoltage + " mV");
+                        mBatteryChargeInPercent.setText(batteryChargeInPercent + " %");
+
+                }
+                });
+
+                mFlightController.setLowBatteryWarningThreshold(lowBatteryThreshold, new CommonCallbacks.CompletionCallback() {
+                    @Override
+                    public void onResult(DJIError djiError)
+                    {
+                        setResultToToast("Low Battery Set: " + (djiError == null ? " Successfully" : djiError.getDescription()));
+                    }
+                });
+
+                mFlightController.setSeriousLowBatteryWarningThreshold(seriousLowBattery, new CommonCallbacks.CompletionCallback() {
+                    @Override
+                    public void onResult(DJIError djiError)
+                    {
+                        setResultToToast("Serious Low Battery Set: " + (djiError == null ? " Successfully" : djiError.getDescription()));
+                    }
+                });
+
+            }
+        }
 
     }
 
@@ -255,8 +340,10 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         if (product != null && product.isConnected()) {
             if (product instanceof Aircraft) {
                 mFlightController = ((Aircraft) product).getFlightController();
+
             }
         }
+
 
         if (mFlightController != null) {
             mFlightController.setStateCallback(new FlightControllerState.Callback() {
@@ -268,10 +355,56 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
                     mHomeLatitude = djiFlightControllerCurrentState.getHomeLocation().getLatitude();
                     mHomeLongitude = djiFlightControllerCurrentState.getHomeLocation().getLongitude();
                     updateDroneLocation();
+                    batteryState();
+                }
+            });
+
+            mFlightController.setSmartReturnToHomeEnabled(true, new CommonCallbacks.CompletionCallback() {
+                @Override
+                public void onResult(DJIError error)
+                {
+                    setResultToToast("Smart RTH Enabled: " + (error == null ? "Successfully" : error.getDescription()));
                 }
             });
         }
     }
+
+
+
+    private void batteryState()
+    {
+
+        mFlightController.getLowBatteryWarningThreshold(new CommonCallbacks.CompletionCallbackWith<Integer>() {
+            @Override
+            public void onSuccess(Integer integer)
+            {
+                lowBattery = integer;
+            }
+
+            @Override
+            public void onFailure(DJIError djiError)
+            {
+                setResultToToast("couldn't get Battery Status");
+
+            }
+        });
+
+        mFlightController.getSeriousLowBatteryWarningThreshold(new CommonCallbacks.CompletionCallbackWith<Integer>() {
+            @Override
+            public void onSuccess(Integer integer) {
+                seriousLowBattery = integer;
+            }
+
+            @Override
+            public void onFailure(DJIError djiError)
+            {
+
+                setResultToToast("Unable to get Low Battery Status");
+
+            }
+        });
+    }
+
 
     //Add Listener for WaypointMissionOperator
     private void addListener() {
@@ -511,6 +644,44 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         RadioGroup speed_RG = (RadioGroup) wayPointSettings.findViewById(R.id.speed);
         RadioGroup actionAfterFinished_RG = (RadioGroup) wayPointSettings.findViewById(R.id.actionAfterFinished);
         RadioGroup heading_RG = (RadioGroup) wayPointSettings.findViewById(R.id.heading);
+        RadioGroup batteryBehaviour_RG = (RadioGroup) wayPointSettings.findViewById(R.id.batteryBehaviour);
+
+//        batteryBehaviour_RG.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+//            @Override
+//            public void onCheckedChanged(RadioGroup radioGroup, int checkedId)
+//            {
+//                FlightControllerState flightControllerState = new FlightControllerState();
+//
+//                if(checkedId == R.id.batteryFlyNormally)
+//                {
+////                    if(lowBattery == lowBatteryThreshold)
+////                    {
+////                        setResultToToast("Low Battery, Consider flying back home now");
+////                    }
+//
+//                    //flightControllerState.setBatteryThresholdBehavior(BatteryThresholdBehavior.FLY_NORMALLY);
+//                }
+//                else if(checkedId == R.id.batteryGoHome)
+//                {
+//                   // flightControllerState.setBatteryThresholdBehavior(BatteryThresholdBehavior.GO_HOME);
+////                    if(lowBattery == lowBatteryThreshold)
+////                    {
+////                       startGoHomeProcedure();
+////                    }
+//
+//                }
+//
+//                else if (checkedId == R.id.batteryLand)
+//                {
+////                    if(lowBattery == lowBatteryThreshold)
+////                    {
+////
+////                    }
+//                   // flightControllerState.setBatteryThresholdBehavior(BatteryThresholdBehavior.LAND_IMMEDIATELY);
+//                }
+//
+//            }
+//        });
 
         speed_RG.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
 
@@ -587,7 +758,7 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 
                         else
                         {
-                            setResultToToast("Invalid Mission Type");
+                            configWayPointMission();
                         }
                     }
 
@@ -600,6 +771,11 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
                 })
                 .create()
                 .show();
+    }
+
+    private void startGoHomeProcedure()
+    {
+
     }
 
     String nulltoIntegerDefalt(String value) {

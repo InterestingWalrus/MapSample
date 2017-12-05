@@ -13,11 +13,65 @@
             android:id="@+id/ConnectStatusTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Map Sample"
+            android:text="Waypoint"
             android:gravity="center"
             android:textColor="#000000"
             android:textSize="21sp"
             />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <TextView
+                android:id="@+id/BatteryChargeRemaining"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="20dp"
+                android:gravity="center"
+                android:text=""
+                android:textStyle="bold"
+                android:textSize="14dp"/>
+            <TextView
+                android:id="@+id/BatteryChargePercent"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="6dp"
+                android:gravity="center"
+                android:text=""
+                android:textStyle="bold"
+                android:textSize="14dp"/>
+            <TextView
+                android:id="@+id/BatteryVoltage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="4dp"
+                android:gravity="center"
+                android:text=""
+                android:textStyle="bold"
+                android:textSize="14dp"/>
+            <TextView
+                android:id="@+id/BatteryCurrent"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="6dp"
+                android:gravity="center"
+                android:text=""
+                android:textStyle="bold"
+                android:textSize="14dp"/>
+            <TextView
+                android:id="@+id/BatteryTemp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="6dp"
+                android:gravity="center"
+                android:text=""
+                android:textStyle="bold"
+                android:textSize="14dp"/>
+
+
+
+
+        </LinearLayout>
     </LinearLayout>
     <LinearLayout
         android:layout_width="match_parent"
