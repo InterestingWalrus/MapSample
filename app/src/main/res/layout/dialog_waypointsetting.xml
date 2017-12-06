@@ -2,175 +2,190 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
     android:layout_marginBottom="10dp"
-    android:layout_marginTop="10dp"
     android:layout_marginLeft="10dp"
-    android:layout_marginRight="10dp">
+    android:layout_marginRight="10dp"
+    android:layout_marginTop="10dp"
+    android:orientation="vertical">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Waypoint Configuration"
-        android:layout_gravity="center_horizontal">
-    </TextView>
+        android:layout_gravity="center_horizontal"
+        android:text="Waypoint Configuration"></TextView>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:layout_marginBottom="10dp"
-        android:layout_marginTop="10dp"
         android:layout_marginLeft="10dp"
-        android:layout_marginRight="10dp">
+        android:layout_marginRight="10dp"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal">
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Altitude:">
-        </TextView>
+            android:text="Altitude:"></TextView>
+
         <EditText
             android:id="@+id/altitude"
             android:layout_width="40dp"
-            android:layout_height="wrap_content">
-        </EditText>
+            android:layout_height="wrap_content"></EditText>
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:layout_marginBottom="10dp"
-        android:layout_marginTop="10dp"
         android:layout_marginLeft="10dp"
-        android:layout_marginRight="10dp">
+        android:layout_marginRight="10dp"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal">
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Speed:">
-        </TextView>
+            android:text="Speed:"></TextView>
+
         <RadioGroup
+            android:id="@+id/speed"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:id="@+id/speed"
-            android:layout_gravity="center_horizontal">
+            android:layout_gravity="center_horizontal"
+            android:orientation="horizontal">
+
             <RadioButton
                 android:id="@+id/lowSpeed"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Low"/>
+                android:text="Low" />
+
             <RadioButton
                 android:id="@+id/MidSpeed"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Mid"/>
+                android:text="Mid" />
+
             <RadioButton
                 android:id="@+id/HighSpeed"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="High"/>
+                android:text="High" />
         </RadioGroup>
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:layout_marginBottom="10dp"
-        android:layout_marginTop="10dp"
         android:layout_marginLeft="10dp"
-        android:layout_marginRight="10dp">
+        android:layout_marginRight="10dp"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal">
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Action After Finished:"/>
+            android:text="Action After Finished:" />
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal" >
+        android:orientation="horizontal">
+
         <RadioGroup
+            android:id="@+id/actionAfterFinished"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:id="@+id/actionAfterFinished"
-            android:layout_gravity="center_horizontal">
+            android:layout_gravity="center_horizontal"
+            android:orientation="horizontal">
+
             <RadioButton
                 android:id="@+id/finishNone"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="5pt"
-                android:text="None"/>
+                android:text="None"
+                android:textSize="5pt" />
+
             <RadioButton
                 android:id="@+id/finishGoHome"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="5pt"
-                android:text="GoHome"/>
+                android:text="GoHome"
+                android:textSize="5pt" />
+
             <RadioButton
                 android:id="@+id/finishAutoLanding"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="5pt"
-                android:text="AutoLand"/>
+                android:text="AutoLand"
+                android:textSize="5pt" />
+
             <RadioButton
                 android:id="@+id/finishToFirst"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="5pt"
-                android:text="BackTo 1st"/>
+                android:text="BackTo 1st"
+                android:textSize="5pt" />
         </RadioGroup>
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:layout_marginBottom="10dp"
-        android:layout_marginTop="10dp"
         android:layout_marginLeft="10dp"
-        android:layout_marginRight="10dp">
+        android:layout_marginRight="10dp"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal">
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Heading:"/>
+            android:text="Heading:" />
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal" >
+        android:orientation="horizontal">
+
         <RadioGroup
+            android:id="@+id/heading"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:id="@+id/heading"
-            android:layout_gravity="center_horizontal">
+            android:layout_gravity="center_horizontal"
+            android:orientation="horizontal">
+
             <RadioButton
                 android:id="@+id/headingNext"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="5pt"
-                android:text="Auto"/>
+                android:text="Auto"
+                android:textSize="5pt" />
+
             <RadioButton
                 android:id="@+id/headingInitDirec"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="5pt"
-                android:text="Initial"/>
+                android:text="Initial"
+                android:textSize="5pt" />
+
             <RadioButton
                 android:id="@+id/headingRC"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="5pt"
-                android:text="RC Control"/>
+                android:text="RC Control"
+                android:textSize="5pt" />
+
             <RadioButton
                 android:id="@+id/headingWP"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="5pt"
-                android:text="Use Waypoint"/>
+                android:text="Use Waypoint"
+                android:textSize="5pt" />
         </RadioGroup>
     </LinearLayout>
 
@@ -178,45 +193,46 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:layout_marginBottom="10dp"
-        android:layout_marginTop="10dp"
         android:layout_marginLeft="10dp"
-        android:layout_marginRight="10dp">
+        android:layout_marginRight="10dp"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal">
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Low Battery Behaviour:"/>
+            android:text="Low Battery Behaviour:" />
     </LinearLayout>
 
     <!--<LinearLayout-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:orientation="horizontal" >-->
-        <!--<RadioGroup-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:orientation="horizontal"-->
-            <!--android:id="@+id/batteryBehaviour"-->
-            <!--android:layout_gravity="center_horizontal">-->
-            <!--<RadioButton-->
-                <!--android:id="@+id/batteryFlyNormally"-->
-                <!--android:layout_width="wrap_content"-->
-                <!--android:layout_height="wrap_content"-->
-                <!--android:textSize="5pt"-->
-                <!--android:text="Fly Normally"/>-->
-            <!--<RadioButton-->
-                <!--android:id="@+id/batteryGoHome"-->
-                <!--android:layout_width="wrap_content"-->
-                <!--android:layout_height="wrap_content"-->
-                <!--android:textSize="5pt"-->
-                <!--android:text="Go Home"/>-->
-            <!--<RadioButton-->
-                <!--android:id="@+id/batteryLand"-->
-                <!--android:layout_width="wrap_content"-->
-                <!--android:layout_height="wrap_content"-->
-                <!--android:textSize="5pt"-->
-                <!--android:text="Land Immediately"/>-->
-        <!--</RadioGroup>-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:orientation="horizontal" >-->
+    <!--<RadioGroup-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:orientation="horizontal"-->
+    <!--android:id="@+id/batteryBehaviour"-->
+    <!--android:layout_gravity="center_horizontal">-->
+    <!--<RadioButton-->
+    <!--android:id="@+id/batteryFlyNormally"-->
+    <!--android:layout_width="wrap_content"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:textSize="5pt"-->
+    <!--android:text="Fly Normally"/>-->
+    <!--<RadioButton-->
+    <!--android:id="@+id/batteryGoHome"-->
+    <!--android:layout_width="wrap_content"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:textSize="5pt"-->
+    <!--android:text="Go Home"/>-->
+    <!--<RadioButton-->
+    <!--android:id="@+id/batteryLand"-->
+    <!--android:layout_width="wrap_content"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:textSize="5pt"-->
+    <!--android:text="Land Immediately"/>-->
+    <!--</RadioGroup>-->
     <!--</LinearLayout>-->
 </LinearLayout>

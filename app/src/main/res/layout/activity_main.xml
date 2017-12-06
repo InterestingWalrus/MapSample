@@ -2,26 +2,28 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:background="#FFFFFF"
+    android:orientation="vertical"
     tools:context=".MainActivity">
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
+
         <TextView
             android:id="@+id/ConnectStatusTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Waypoint"
             android:gravity="center"
+            android:text="Waypoint"
             android:textColor="#000000"
-            android:textSize="21sp"
-            />
+            android:textSize="21sp" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
+
             <TextView
                 android:id="@+id/BatteryChargeRemaining"
                 android:layout_width="wrap_content"
@@ -29,8 +31,9 @@
                 android:layout_marginLeft="20dp"
                 android:gravity="center"
                 android:text=""
-                android:textStyle="bold"
-                android:textSize="14dp"/>
+                android:textSize="14dp"
+                android:textStyle="bold" />
+
             <TextView
                 android:id="@+id/BatteryChargePercent"
                 android:layout_width="wrap_content"
@@ -38,8 +41,9 @@
                 android:layout_marginLeft="6dp"
                 android:gravity="center"
                 android:text=""
-                android:textStyle="bold"
-                android:textSize="14dp"/>
+                android:textSize="14dp"
+                android:textStyle="bold" />
+
             <TextView
                 android:id="@+id/BatteryVoltage"
                 android:layout_width="wrap_content"
@@ -47,8 +51,9 @@
                 android:layout_marginLeft="4dp"
                 android:gravity="center"
                 android:text=""
-                android:textStyle="bold"
-                android:textSize="14dp"/>
+                android:textSize="14dp"
+                android:textStyle="bold" />
+
             <TextView
                 android:id="@+id/BatteryCurrent"
                 android:layout_width="wrap_content"
@@ -56,8 +61,9 @@
                 android:layout_marginLeft="6dp"
                 android:gravity="center"
                 android:text=""
-                android:textStyle="bold"
-                android:textSize="14dp"/>
+                android:textSize="14dp"
+                android:textStyle="bold" />
+
             <TextView
                 android:id="@+id/BatteryTemp"
                 android:layout_width="wrap_content"
@@ -65,71 +71,79 @@
                 android:layout_marginLeft="6dp"
                 android:gravity="center"
                 android:text=""
-                android:textStyle="bold"
-                android:textSize="14dp"/>
-
-
+                android:textSize="14dp"
+                android:textStyle="bold" />
 
 
         </LinearLayout>
     </LinearLayout>
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
+
         <Button
             android:id="@+id/home"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Set Home"
-            android:layout_weight="1"/>
+            android:layout_weight="1"
+            android:text="Set Home" />
+
         <Button
             android:id="@+id/locate"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Locate"
-            android:layout_weight="1"/>
+            android:layout_weight="1"
+            android:text="Locate" />
+
         <Button
             android:id="@+id/add"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Add"
-            android:layout_weight="1"/>
+            android:layout_weight="1"
+            android:text="Add" />
+
         <Button
             android:id="@+id/clear"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Clear"
-            android:layout_weight="1"/>
+            android:layout_weight="1"
+            android:text="Clear" />
     </LinearLayout>
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
+
         <Button
             android:id="@+id/config"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Config"
-            android:layout_weight="0.9"/>
+            android:layout_weight="0.9"
+            android:text="Config" />
+
         <Button
             android:id="@+id/upload"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Upload"
-            android:layout_weight="0.9"/>
+            android:layout_weight="0.9"
+            android:text="Upload" />
+
         <Button
             android:id="@+id/start"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Start"
-            android:layout_weight="1"/>
+            android:layout_weight="1"
+            android:text="Start" />
+
         <Button
             android:id="@+id/stop"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Stop"
-            android:layout_weight="1"/>
+            android:layout_weight="1"
+            android:text="Stop" />
     </LinearLayout>
 
     <LinearLayout
@@ -141,19 +155,28 @@
             android:id="@+id/polygon"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Polygon"
-           android:layout_weight="1"/>
+            android:layout_weight="1"
+            android:text="Polygon" />
+
         <Button
-            android:id="@+id/circular"
+        android:id="@+id/circular"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="circular" />
+
+        <Button
+            android:id="@+id/goHome"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="circular"
-            android:layout_weight="1"/>
+            android:layout_weight="1"
+            android:text="Go Home" />
 
     </LinearLayout>
+
     <fragment
         android:id="@+id/map"
+        class="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        class="com.google.android.gms.maps.SupportMapFragment" />
+        android:layout_height="match_parent" />
 </LinearLayout>
