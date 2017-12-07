@@ -87,8 +87,11 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
     // See comments on calcLongitudeOffset function.
     private static final double ONE_METER_OFFSET = 0.00000899322;
 
+    // Google Map Object
     private GoogleMap gMap;
 
+    // Coordinate for the current position retrieved from the tablet
+    // Coordinate is set as a home position
     private double mHomeLatitude;
     private double mHomeLongitude;
 
@@ -99,6 +102,7 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
     private Button circle;
     private Button goHome;
 
+    // check to add waypoints or not
     private boolean isAdd = false;
 
     // Drone coordinates
@@ -106,18 +110,22 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
     ArrayList<Marker> markers = new ArrayList<>();
     private Marker droneMarker = null;
 
+   // Initialise speed and altitude of aircraft
     private float altitude = 100.0f;
     private float mSpeed = 10.0f;
 
+    // Used to draw shapes on the map
     Polygon shape;
 
     // Home point for the Drone
     private LatLng homeBase;
 
+    // Lists to store waypoints for missions
     private List<Waypoint> waypointList = new ArrayList<>();
     private List<Waypoint> coordinateWaypointList = new ArrayList<>();
     private List<Waypoint> circularWaypointList = new ArrayList<>();
 
+    // DJI Mission Configuration classes
     public static WaypointMission.Builder waypointMissionBuilder;
     private FlightController mFlightController;
     private WaypointMissionOperator instance;
@@ -125,38 +133,42 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
     private WaypointMissionHeadingMode mHeadingMode = WaypointMissionHeadingMode.AUTO;
     private FusedLocationProviderClient mFusedLocationClient;
 
-
+    // Fields for retrieved battery State.
     private int batteryChargeRemaining;
     private int batteryChargeInPercent;
     private int batteryVoltage;
     private int batteryCurrent;
     private float batteryTemp;
 
+    // UI Elements for Battery State
     private TextView mBatteryChargeRemaining;
     private TextView mBatteryChargeInPercent;
     private TextView mBatteryVoltage;
     private TextView mBatteryCurrent;
     private TextView mBatteryTemp;
+    private TextView droneCoordinates;
 
-
+   // Low battery thresholds
     private int lowBattery;
     private int seriousLowBattery;
     final private int lowBatteryThreshold = 20;
     final private int seriousLowBatteryThreshold = 10;
 
-
-    // Instantiate dialogSample class;
-    DialogSample dialogSample = new DialogSample();
-
+    // 1 for Polygon, 2 for circular, 0 other
     private int missionType;
 
+    // To Update Drone Location in MainActivity
+   private String droneTextLat ;
+   private String droneTextLng;
 
+
+    // On App Resume, re-initialise flight controller
+    // Update Battery Status
     @Override
     protected void onResume() {
         super.onResume();
         initFlightController();
         upDateBatteryStatus();
-
     }
 
     @Override
@@ -171,14 +183,13 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         super.onDestroy();
     }
 
-    /**
-     * @Description : RETURN Button RESPONSE FUNCTION
-     */
     public void onReturn(View view) {
         Log.d(TAG, "onReturn");
         this.finish();
     }
 
+    // Wrapper for the Android MakeText function.
+    // input parameters: String to be written in Toast
     private void setResultToToast(final String string) {
         MainActivity.this.runOnUiThread(new Runnable() {
             @Override
@@ -208,6 +219,7 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         mBatteryChargeRemaining = (TextView) findViewById(R.id.BatteryChargeRemaining);
         mBatteryCurrent = (TextView) findViewById(R.id.BatteryCurrent);
         mBatteryVoltage = (TextView) findViewById(R.id.BatteryVoltage);
+        droneCoordinates = (TextView) findViewById(R.id.droneCoordinates);
 
         locate.setOnClickListener(this);
         add.setOnClickListener(this);
@@ -288,6 +300,10 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
     }
 
 
+    // Update battery status every second.
+    // Continuously checks if batteryCharge left is lower than threshold
+    // Invokes go-home procedure
+    //TODO: only call startGoHomeProcedure once
     private void upDateBatteryStatus() {
 
        final Handler mHandler = new Handler();
@@ -312,8 +328,9 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
                                 mBatteryVoltage.setText(batteryVoltage + " mV");
                                 mBatteryChargeInPercent.setText(batteryChargeInPercent + " %");
 
-                                if(homeBase != null && batteryChargeInPercent <= 55)
+                                if(homeBase != null && batteryChargeInPercent <= lowBatteryThreshold)
                                 {
+                                    setResultToToast("Battery Low, Mission Aborted");
                                     startGoHomeProcedure();
 
                                 }
@@ -332,6 +349,8 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 
     }
 
+    // Sets Low and serious low battery thresholds. Called on App Launch after onProductConnectionChange
+    // detects aircraft.
     private void initBattery() {
         mFlightController.setLowBatteryWarningThreshold(lowBatteryThreshold, new CommonCallbacks.CompletionCallback() {
             @Override
@@ -382,7 +401,8 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         }
     }
 
-
+    // Battery State to return battery status
+    // Method Deprecated
     private void batteryState() {
 
         mFlightController.getLowBatteryWarningThreshold(new CommonCallbacks.CompletionCallbackWith<Integer>() {
@@ -425,6 +445,7 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         }
     }
 
+    //Remove Listener for WaypointMissionOperator
     private void removeListener() {
         if (getWaypointMissionOperator() != null) {
             getWaypointMissionOperator().removeListener(eventNotificationListener);
@@ -448,8 +469,9 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         }
 
         @Override
-        public void onExecutionStart() {
-
+        public void onExecutionStart()
+        {
+            setResultToToast("Execution Starting ");
         }
 
         @Override
@@ -471,6 +493,8 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 
     }
 
+    // Adds Waypoint to the map when map is clicked and if ADD button is pressed
+    // If Add Button isn't clicked, Throws up an error message
     @Override
     public void onMapClick(LatLng point) {
         if (isAdd == true) {
@@ -486,10 +510,11 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
                 waypointMissionBuilder.waypointList(waypointList).waypointCount(waypointList.size());
             }
         } else {
-            setResultToToast("Cannot Add Waypoint");
+            setResultToToast("Cannot Add Waypoint, Check is ADD Button is pressed.");
         }
     }
 
+    // Coordinates Bound check.
     public static boolean checkGpsCoordinates(double latitude, double longitude) {
         return (latitude > -90 && latitude < 90 && longitude > -180 && longitude < 180) && (latitude != 0f && longitude != 0f);
     }
@@ -502,7 +527,8 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         final MarkerOptions markerOptions = new MarkerOptions();
         markerOptions.position(pos);
         markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.aircraft));
-
+         droneTextLat = Double.toString(droneLocationLat);
+         droneTextLng = Double.toString(droneLocationLng);
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -512,13 +538,15 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 
                 if (checkGpsCoordinates(droneLocationLat, droneLocationLng)) {
                     droneMarker = gMap.addMarker(markerOptions);
+                    // Update drone position in Lat,Lng in UI
+                    droneCoordinates.setText(droneTextLat + ", "+ droneTextLng);
 
                 }
             }
         });
     }
 
-    // Set Markers
+    // Set Markers to markwaypoint on the map.
     private void markWaypoint(LatLng point) {
         //Create MarkerOptions object
         MarkerOptions markerOptions = new MarkerOptions();
@@ -534,6 +562,9 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 
     }
 
+    // TODO: Why did I separate this again?
+    // Marks the current homepoint on the map
+    // Should be called to update map after pressing clear button
     private void markHomePoint(LatLng point) {
         //Create MarkerOptions object
         MarkerOptions markerOptions = new MarkerOptions();
@@ -543,38 +574,55 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 
     }
 
+    // Events and functions when buttons are clicked
     @Override
     public void onClick(View v) {
-        // Return current drone coordinates to write on-screen
-        String droneLat = Double.toString(droneLocationLat);
-        String droneLon = Double.toString(droneLocationLng);
+
+
         switch (v.getId()) {
 
+            // Mark current position of tablet on Map
+            // Interrupt mission and Start RTH Procedure
+            // when button pressed.
+            // RTH Function won't work if Aircraft isn't mid-flight/mid-mission
+            //TODO: Can you get Aircraft to fly home if it's landed in a different place?
             case R.id.goHome:
             {
+                markHomePoint(homeBase);
                 startGoHomeProcedure();
                 break;
             }
 
-            case R.id.home: {
-                // setHomeLocationCurrentLocation();
+            //Sets current location as home position.
+            //For redundancy really, Home Position is automatically set to current
+            // position when app is opened
+            case R.id.home:
+            {
                 setHomeLocation();
+                markHomePoint(homeBase);
                 break;
             }
-            case R.id.locate: {
+            //Locates drone's current position and current home location
+            //TODO Write current location to a UI element and return distance from current location to aircraft on the UI
+            case R.id.locate:
+            {
 
+                markHomePoint(homeBase);
                 updateDroneLocation();
                 cameraUpdate(); // Locate the drone's place
-                //Toast.makeText(getApplicationContext(), droneLat + ", " + droneLon, Toast.LENGTH_LONG).show();
                 getHomeLocation();
                 break;
             }
-            case R.id.add: {
+            // toggle adding waypoints to map
+            case R.id.add:
+            {
                 enableDisableAdd();
                 break;
             }
-            case R.id.clear: {
-
+            // Clears all mission parameters
+            // Also clears the screen
+            case R.id.clear:
+            {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -592,11 +640,15 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
                 missionType = 0;
                 break;
             }
+            // Opens the setting dialog to set mission parameters
+            //TODO: Can you add low battery behaviour to the dialog here?
             case R.id.config: {
                 showSettingDialog();
                 break;
             }
 
+            // Sets a predefined mission
+            // Mission adds waypoint to the N,E,S,D coordinates of the aircraft
             case R.id.polygon: {
                 missionType = 1;
                 showSettingDialog();
@@ -605,19 +657,23 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 
                 break;
             }
+            // uploads parameters of current mission
             case R.id.upload: {
                 uploadWayPointMission();
                 break;
             }
+            //starts the defined mission
             case R.id.start: {
                 startWaypointMission();
                 break;
             }
+            //Stops the mission
             case R.id.stop: {
                 stopWaypointMission();
                 break;
             }
-
+            // Uploads a mission of the aircraft flying in a circle with a predefined initial bearing
+                //TODO Calculate number of waypoints in the map based on a given initial bearing
             case R.id.circular: {
                 missionType = 2;
                 showSettingDialog();
@@ -628,14 +684,7 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         }
     }
 
-//    private void openDialog() {
-//
-//        dialogSample.show(getSupportFragmentManager(), "Flight Parameters");
-//        mSpeed = (float) dialogSample.returnSpeed();
-//        altitude = (float) dialogSample.returnAltitude();
-//
-//    }
-
+    // Updates Camera view and zooms into current Aircraft position
     private void cameraUpdate() {
         LatLng pos = new LatLng(droneLocationLat, droneLocationLng);
         float zoomLevel = (float) 18.0;
@@ -644,6 +693,7 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 
     }
 
+    //Method enables/disables the Waypoint "Add" Button
     private void enableDisableAdd() {
         if (isAdd == false) {
             isAdd = true;
@@ -654,6 +704,14 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         }
     }
 
+    //Settings dialog showing the following:
+    //The Altitude for the mission
+    // The Speed for the mission
+       //Three options at 5m/s, 10m/s, and 3.0m/s
+    //Action after mission is over
+       // Go back Home, AutoLand at last Waypoint, do nothing or fly back to first waypoint.
+    //Aircraft Heading
+    //TODO Figure out what the Aircraft's behaviour and orientation with heading
     private void showSettingDialog() {
         LinearLayout wayPointSettings = (LinearLayout) getLayoutInflater().inflate(R.layout.dialog_waypointsetting, null);
 
@@ -745,6 +803,9 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
                 .show();
     }
 
+    //Method to initiate flyback home procedure.
+    // Aircraft should fly back at an altitude of 30m
+    //TODO is there a need for setResultToToast here..
     private void startGoHomeProcedure()
     {
       stopWaypointMission();
@@ -766,6 +827,8 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 
     }
 
+    // Currently ununsed method
+    //TODO add a usecase for this.
     private void LandDrone()
     {
         mFlightController.startLanding(new CommonCallbacks.CompletionCallback() {
@@ -794,6 +857,9 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         return true;
     }
 
+
+   // N,E,S,D Mission
+    //TODO Add mission Actions for each waypoint.
     private void coordinateWaypointMission() {
 
         if (waypointMissionBuilder == null) {
@@ -852,6 +918,7 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
     Creates a circular mission of 10 way points with each point being 100m
     away from the home point.
      */
+    //TODO Add waypoint actions later
     private void circularMission() {
 
         if (waypointMissionBuilder == null) {
@@ -889,7 +956,8 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         double homeLat = Math.toRadians(Lat);
         double homeLon = Math.toRadians(Lon);
 
-
+        //Adapted from the Aviation Formulary
+        // http://www.edwilliams.org/avform.htm
         for (int i = 0; i < numPoints; i++) {
 
             double bearing = slice * i;
@@ -931,9 +999,10 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 
     }
 
+    // Configures custom waypoint mission
     private void configWayPointMission() {
 
-        String pol_points = null;
+        String pol_points = null;  // Number of WayPoints to be written to Toast
 
         if (waypointMissionBuilder == null) {
 
@@ -971,7 +1040,6 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
             // Remove
             pol_points = Integer.toString(numPoints);
 
-
             // String Altitude_Value =  String.valueOf(waypointMissionBuilder.getWaypointList().get(waypointMissionBuilder.getWaypointList().size() - 1).altitude);
 
             setResultToToast("Altitudes set succesfully");
@@ -985,6 +1053,7 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         }
     }
 
+    //Uploads Waypoint Mission using DJI MissionOperator
     private void uploadWayPointMission() {
 
         getWaypointMissionOperator().uploadMission(new CommonCallbacks.CompletionCallback() {
@@ -1001,6 +1070,7 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 
     }
 
+    // Method to set home Location
     private void setHomeLocation() {
         if (mFlightController != null) {
 
@@ -1015,6 +1085,8 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         }
     }
 
+    // Sets Home Location as Current AircraftLocation.
+    // care to be taken when using this method. (Currently unused)
     private void setHomeLocationCurrentLocation() {
         if (mFlightController != null) {
 
@@ -1029,7 +1101,7 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         }
     }
 
-
+    //Returns current home location in Coordinate degrees
     private void getHomeLocation() {
         if (mFlightController != null) {
             mFlightController.getHomeLocation(new CommonCallbacks.CompletionCallbackWith<LocationCoordinate2D>() {
@@ -1046,15 +1118,12 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
                     setResultToToast(" Get Home Location Error: " + error.getDescription());
                 }
 
-
             });
-
-
         }
-
     }
 
-    // Draw Polygon of Marker Distance
+    // Draw Polygon of each markers currently on map
+    // Google Maps API currently doesn't fill overlapping "lines/polygons"
     private void drawPolygon(int numPoints) {
         PolygonOptions polygonOptions = new PolygonOptions();
         polygonOptions.fillColor(0x330000FF);
@@ -1084,6 +1153,7 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
     }
 
 
+    //Starts Waypoint Mission
     private void startWaypointMission() {
 
         //Check current state of mission update
@@ -1109,6 +1179,7 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         }
     }
 
+    //Stops WayPoint Mission
     private void stopWaypointMission() {
 
         getWaypointMissionOperator().stopMission(new CommonCallbacks.CompletionCallback() {
@@ -1120,6 +1191,9 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 
     }
 
+    // Updates Map with and marks current location of device in use
+    //Make sure you check permissions if you're using the new Google Fused Location API
+    // Older method for google Locations has been deprecated.
     @Override
     public void onMapReady(GoogleMap googleMap) {
         if (gMap == null) {
@@ -1133,7 +1207,6 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
                     != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             }
         }
-
         mFusedLocationClient.getLastLocation()
                 .addOnSuccessListener(this, new OnSuccessListener<Location>() {
                     @Override
@@ -1149,8 +1222,5 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
                         }
                     }
                 });
-//        homeBase = new LatLng(52.761155 , -1.247651);
-//        gMap.addMarker(new MarkerOptions().position(homeBase).title("Marker in Shenzhen"));
-//        gMap.moveCamera(CameraUpdateFactory.newLatLng(homeBase));
     }
 }
