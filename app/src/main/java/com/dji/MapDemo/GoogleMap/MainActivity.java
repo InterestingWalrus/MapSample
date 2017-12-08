@@ -169,6 +169,7 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
         super.onResume();
         initFlightController();
         upDateBatteryStatus();
+        getLastLocation();
     }
 
     @Override
@@ -1193,15 +1194,22 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
 
     // Updates Map with and marks current location of device in use
     //Make sure you check permissions if you're using the new Google Fused Location API
-    // Older method for google Locations has been deprecated.
+    // Older method for google Locations(FusedLocationProviderApi) has been deprecated.
     @Override
     public void onMapReady(GoogleMap googleMap) {
         if (gMap == null) {
             gMap = googleMap;
             setUpMap();
-
         }
 
+        getLastLocation();
+
+    }
+
+
+//Returns Last Location
+    private void getLastLocation()
+    {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                     != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -1222,5 +1230,6 @@ public class MainActivity extends FragmentActivity implements View.OnClickListen
                         }
                     }
                 });
+
     }
 }
